@@ -11,7 +11,12 @@ import it.unipr.aotlab.code.logging.Logger;
 import it.unipr.aotlab.code.logging.TextualFormatter;
 import it.unipr.aotlab.code.runtime.Controller;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.ResourceBundle;
+
+import javax.vecmath.Point2i;
 
 public final class Initiator2D {
 
@@ -55,10 +60,11 @@ public final class Initiator2D {
 		final int sideX = DIM;
 		final int sideY = DIM;
 		
-		final Integer preyPos[] = {0,0};
+		List<Point2i> p= generateDifferentRandomPoints(5, DIM);
+		
+		final Integer preyPos[] = {p.get(0).x,p.get(0).y};
 		final Integer goalPos[] = {9, 9};
-		//final Integer predatorsPos[] = {3, 3, 4, 4, 5, 5, 6, 6};
-		final Integer predatorsPos[] = {1,1};
+		final Integer predatorsPos[] = {p.get(1).x,p.get(1).y,  p.get(2).x,p.get(2).y,  p.get(3).x,p.get(3).y,  p.get(4).x,p.get(4).y};
 
 		final Object[] prey = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Prey", preyPos };
 		final Object[] predator = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Predator", predatorsPos };
@@ -73,6 +79,28 @@ public final class Initiator2D {
 		c.setArguments(length, sideX, sideY, new Object[] { prey, predator /*fixed_goal*/}, /*new Object[]{ goal, empty }*/ null, radius);
 
 		Controller.INSTANCE.run();
+	}
+	
+	public static List<Point2i> generateDifferentRandomPoints(int pointsNumber, int limit){
+		List<Point2i> pl = new ArrayList<>();
+		Random r = new Random();
+		
+		
+		pl.add(new Point2i(r.nextInt(limit), r.nextInt(limit)) );
+		
+		for(int count = 0; count < (pointsNumber-1);){
+			Point2i p = new Point2i();
+			p.x = r.nextInt(limit);
+			p.y = r.nextInt(limit);
+			
+			if( pl.contains(p) == true)	continue;
+			else{
+				count++;
+				pl.add(p);
+			}
+		}
+		
+		return pl;
 	}
 
 }

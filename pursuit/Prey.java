@@ -39,6 +39,8 @@ public class Prey extends Cell {
 	private final Point2i nextMove;
 	private final List<Pair<Reference,Point2i>> conflictMessages;
 	private boolean conflictDetected;
+	
+	private final List<Point2i> predatorsPos;
 
 	static {
 		ResourceBundle b;
@@ -71,6 +73,7 @@ public class Prey extends Cell {
 		this.nextMove = new Point2i();
 		this.conflictMessages = new ArrayList<>();
 		this.conflictDetected = false;
+		this.predatorsPos = new ArrayList<>();
 	}
 
 	@Override
@@ -124,6 +127,20 @@ public class Prey extends Cell {
 			// Check the next move (for movable actors)
 			if(m.getContent() instanceof Move2DView){
 				Move2DView v = (Move2DView)m.getContent();
+				
+				// CHECK PREDATOR POSITION
+				if( v.getInfo() == "Predator" ){
+					Cell2DState s = (Cell2DState)Prey.this.getState();
+					
+					Point2i dist = toroidalDistance(new Point2i(s.getX(),  s.getY()), v.getPos());
+					int absX = Math.abs( dist.x );
+					int absY = Math.abs( dist.y );
+					// I can see the prey
+					if( (absX <= FOV) && (absY <= FOV) ){
+						System.out.println(Prey.this.getReference().toString() + "Can see the predator!!");
+						Prey.this.predatorsPos.add( v.getPos() );
+					}
+				}
 				
 				// Check if there are conflicting next move
 				if( (Prey.this.nextMove.x == v.getNextPos().x) && (Prey.this.nextMove.y == v.getNextPos().y) ){
@@ -222,7 +239,12 @@ public class Prey extends Cell {
 		this.setState(s);
 		
 		// Compute the next position
-		roaming();
+		if( this.predatorsPos.size() == 0)
+			roaming();
+		else{
+			escape();
+		}
+		
 		
 		// Update next move
 		this.nextMove.x = s.getX() + this.direction.x;
@@ -266,10 +288,61 @@ public class Prey extends Cell {
 		}
 	}
 	
+	public void escape(){
+		System.out.println("size = " + this.predatorsPos.size());
+		Cell2DState s = (Cell2DState)this.getState();
+		
+		int deltaX = 0;
+		int deltaY = 0;
+		Point2i dist = new Point2i();
+		for(int i = 0; i < this.predatorsPos.size(); ++i){
+			//deltaX += this.predatorsPos.get(i).x - s.getX();
+			//deltaY += this.predatorsPos.get(i).y - s.getY();
+			dist = toroidalDistance(new Point2i(s.getX(), s.getY()), this.predatorsPos.get(i));
+			System.out.println("Toroidal distance = " + dist.toString());
+			
+			deltaX += dist.x;
+			deltaY += dist.y;
+		}
+		// Invert direction
+		deltaX *= -1;
+		deltaY *= -1;
+		
+		if(Math.abs(deltaX) > Math.abs(deltaY)){
+			this.direction.x = (int)Math.signum((double)deltaX);
+			this.direction.y = 0;
+		}
+		else{
+			this.direction.x = 0;
+			this.direction.y = (int)Math.signum((double)deltaY);
+		}
+		
+		this.predatorsPos.clear();
+	}
+	
+	/////////////////////////////////////
+	// FUNCTIONS FOR TOROIDAL ENVIRONMENT
+	/////////////////////////////////////
 	public void normailizePosition(Point2i pos){
 		if(pos.x < 0) pos.x += DIM;
 		if(pos.y < 0) pos.y += DIM;
 		if(pos.x >= DIM) pos.x -= DIM;
 		if(pos.y >= DIM) pos.y -= DIM;
+	}
+	
+	public Point2i toroidalDistance(Point2i s, Point2i d){
+		Point2i res = new Point2i();
+		
+		int xr = d.x - s.x;
+		int xl = (d.x + DIM) - s.x;
+		if( Math.abs(xr) < Math.abs(xl) ) res.x = xr;
+		else res.x = xl;
+		
+		int yu = d.y - s.y;
+		int yd = d.y - (s.y + DIM);
+		if( Math.abs(yu) < Math.abs(yd) ) res.y = yu;
+		else res.y = yd;
+		
+		return res;
 	}
 }
