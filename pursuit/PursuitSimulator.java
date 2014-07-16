@@ -36,8 +36,6 @@ public final class PursuitSimulator extends DiscreteSimulator {
 	private int sideX;
 	// Grid Y-side.
 	private int sideY;
-	// Grid cells references.
-	private Reference[][] references;
 	
 	private List<Pair<Point2i, Reference>> ref;
 	// Behavior- probability map.
@@ -45,21 +43,6 @@ public final class PursuitSimulator extends DiscreteSimulator {
 	// Map that contains grid points and behaviors for that points
 	private Map<Point2i, String> fixedBehaviors;
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @param v
-	 *            the arguments:
-	 * 
-	 *            the simulation length, the size of the x-side of the grid, the
-	 *            size of the y-side of the grid and the behaviors description.
-	 * 
-	 *            Each behavior is described through:
-	 * 
-	 *            the qualified class name, and the probabilities that it can be
-	 *            the first behavior of a cell.
-	 * 
-	 **/
 	@Override
 	@SuppressWarnings("unchecked")
 	public List<Case> initialize(final Object[] v) {
@@ -79,12 +62,10 @@ public final class PursuitSimulator extends DiscreteSimulator {
 
 		// Check for actors with random position
 		makeRandomBehaviors((Object[]) v[i++]);
-
-		this.references = new Reference[this.sideX][this.sideY];
 		
 		this.ref = new ArrayList<Pair<Point2i, Reference>>();
 				
-		int mr = (int) v[i];
+		//int mr = (int) v[i];
 		try {
 			for (int x = 0; x < this.sideX; x++) {
 				for (int y = 0; y < this.sideY; y++) {
@@ -171,59 +152,4 @@ public final class PursuitSimulator extends DiscreteSimulator {
 		}
 		return null;
 	}
-
-	// Finds the references of the cells to which send/receive state
-	// information.
-	private Map<Point2i, Reference> findMap(final int x, final int y, final int m) {
-		Map<Point2i, Reference> ns = new HashMap<>();
-		
-		int shiftX, shiftY;
-		for(int dx = -m; dx <= m; ++dx){
-			for(int dy = -m; dy <= m; ++dy){
-				
-				if( (dx == 0) && (dy == 0)) continue;
-				
-				// Check bounds for top and the bottom
-				if( (x + dx) < 0)  shiftX = x + dx + this.sideX;
-				else if( (x + dx) >= 10 ) shiftX = (x + dx) - this.sideX;
-				else shiftX = x + dx;
-				
-				// Check the bounds  for right and left
-				if( (y + dy) < 0 ) shiftY = y + dy + this.sideY;
-				else if( (y + dy) >= this.sideY ) shiftY = (y + dy) - this.sideY;
-				else shiftY = y + dy;
-				
-				// Setting the relative position
-				ns.put(new Point2i(dx, dy), this.references[shiftX][shiftY]);
-			}
-		}
-		
-		return ns;
-	}
-	/*
-	 * // Finds the references of the cells at a specific distance. private
-	 * Set<Reference> findSet(final int x, final int y, final int r) {
-	 * Set<Reference> ss = new HashSet<>();
-	 * 
-	 * int posX = x; int posY = y;
-	 * 
-	 * for (int a = 0; a < this.sideX; a++) { int dX, dY;
-	 * 
-	 * for (int o = 0; o < this.sideY; o++) { dX = Math.abs(posX - a); dY =
-	 * Math.abs(posY - o);
-	 * 
-	 * if (isInSet(dX, dY, r)) { ss.add(this.references[a][o]); } } }
-	 * 
-	 * return ss; }
-	 * 
-	 * // Checks if a cell is at a specific distance. private boolean
-	 * isInSet(final int dX, final int dY, final int r) { if (r == 0) { return
-	 * ((dX == 0) && (dY == 0)); } else if (((dX <= r) || (dX >= (this.sideX -
-	 * r))) && ((dY <= r) || (dY >= (this.sideY - r)))) { int l = r - 1;
-	 * 
-	 * return !(((dX <= l) || (dX >= (this.sideX - l))) && ((dY <= l) || (dY >=
-	 * (this.sideY - l)))); }
-	 * 
-	 * return false; }
-	 */
 }

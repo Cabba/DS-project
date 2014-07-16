@@ -64,7 +64,7 @@ public final class Initiator2D {
 		final Object[] prey = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Prey", preyPos };
 		final Object[] predator = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Predator", predatorsPos };
 		final Object[] fixed_goal = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Goal", goalPos };
-		final Object[] goal = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Goal", 0.1};
+		final Object[] goal = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Goal", 0.01};
 
 		final int radius = 1;
 
@@ -72,7 +72,7 @@ public final class Initiator2D {
 		
 		c.setScheduler(PursuitSimulator.class.getName());
 
-		c.setArguments(length, sideX, sideY, policy, new Object[] { prey, predator, fixed_goal}, /*new Object[]{ goal }*/ null, radius);
+		c.setArguments(length, sideX, sideY, policy, new Object[] { prey, predator, fixed_goal}, new Object[]{ goal }, radius);
 
 		Controller.INSTANCE.run();
 	}

@@ -15,17 +15,16 @@ public final class Move2DView implements StateView
 {
   private static final long serialVersionUID = 1L;
 
-  private Point2i pos;
-  private Point2i nextPos;
+  private final Point2i pos;
+  private final Point2i nextPos;
   private final String info;
 
-  public Move2DView(int x, int y, int nextX, int nextY, String info)
+  public Move2DView(Point2i position, int nextX, int nextY, String info)
   {
 	this.pos = new Point2i();
 	this.nextPos = new Point2i();
 	
-    this.pos.x = x;
-    this.pos.y = y;
+    this.pos.set(position);
     
     this.nextPos.x = nextX;
     this.nextPos.y = nextY;

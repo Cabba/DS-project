@@ -29,9 +29,7 @@ public class Predator extends Cell {
 	private static final long serialVersionUID = 1L;
 
 	// Configurable parameters
-	private static final int RADIUS;
 	private static final int FOV;
-	private static final double CHANGE_DIR_PROB;
 	private static final int DIM;
 
 	private PursuitPolicy policy;
@@ -39,12 +37,12 @@ public class Predator extends Cell {
 	private final Point2i nextMove;
 
 	// Conflict resolution
-	private final List<Pair<Reference, Point2i>> conflictMessages;
-	private boolean conflictDetected;
+	private final List<Pair<Reference, Point2i>> conflictingMessages;
+	private boolean conflict;
 
 	private final List<Pair<Reference, Point2i>> predators;
 	private Point2i preyPos;
-	private boolean canSeePrey;
+	private boolean preyVisible;
 
 	static {
 		ResourceBundle b;
@@ -61,9 +59,7 @@ public class Predator extends Cell {
 			System.exit(-1);
 		}
 
-		RADIUS = Integer.parseInt(b.getString("prey.radius"));
 		FOV = Integer.parseInt(b.getString("predator.fov"));
-		CHANGE_DIR_PROB = Double.parseDouble(b.getString("predator.change_direction_prob"));
 		DIM = Integer.parseInt(b.getString("field_dim"));
 	}
 
@@ -71,18 +67,18 @@ public class Predator extends Cell {
 		this.direction = new Point2i(-1, 0);
 		this.nextMove = new Point2i();
 
-		this.conflictMessages = new ArrayList<>();
-		this.conflictDetected = false;
+		this.conflictingMessages = new ArrayList<>();
+		this.conflict = false;
 
 		// Movement logic
 		this.preyPos = new Point2i();
 		this.predators = new ArrayList<>();
-		this.canSeePrey = false;
+		this.preyVisible = false;
 	}
 
 	@Override
 	public int getRadius() {
-		return RADIUS;
+		return 0;
 	}
 
 	/** {@inheritDoc} **/
@@ -90,8 +86,6 @@ public class Predator extends Cell {
 	public List<Case> initialize(final Object[] v) {
 		if (v[0] instanceof PursuitPolicy)
 			this.policy = (PursuitPolicy) v[0];
-		if (this.policy != null)
-			System.out.println("Policy setted in predator");
 		return initialize();
 	}
 
@@ -105,21 +99,14 @@ public class Predator extends Cell {
 		l.add(new ProcessPositionCase());
 
 		// Initialize next move
-
-		Cell2DState s = (Cell2DState) this.getState();
-
-		this.nextMove.x = s.getX() + this.direction.x;
-		this.nextMove.y = s.getY() + this.direction.y;
+		this.nextMove.x = getPosition().x + this.direction.x;
+		this.nextMove.y = getPosition().y + this.direction.y;
 		ToroidalUtils.normailizePosition(this.nextMove, DIM);
 		sendInformation();
 
 		return l;
 	}
 
-	/*
-	 * Wait until a LEAVE_OK message arrive, and when this arrive set the agent
-	 * behavior as changeable.
-	 */
 	private final class ProcessPositionCase extends Case {
 		private static final long serialVersionUID = 1L;
 
@@ -143,10 +130,8 @@ public class Predator extends Cell {
 					int absY = Math.abs(dist.y);
 					// I can see the prey
 					if ((absX <= FOV) && (absY <= FOV)) {
-						// System.out.println(Predator.this.getReference().toString()
-						// + "Can see the prey!!");
 						Predator.this.preyPos = v.getPos();
-						Predator.this.canSeePrey = true;
+						Predator.this.preyVisible = true;
 					}
 				}
 
@@ -163,24 +148,18 @@ public class Predator extends Cell {
 				// EVALUATE CONFLICTS
 				// Check if there are conflicting next move
 				if ((Predator.this.nextMove.x == v.getNextPos().x) && (Predator.this.nextMove.y == v.getNextPos().y)) {
-					Predator.this.conflictMessages.add(new Pair<>(m.getSender(), v.getNextPos()));
+					Predator.this.conflictingMessages.add(new Pair<>(m.getSender(), v.getNextPos()));
 				}
 				// Check if my next position is conflicting with the actual
 				// position of an actor
 				if ((Predator.this.nextMove.x == v.getPos().x) && (Predator.this.nextMove.y == v.getPos().y)) {
-					Predator.this.conflictDetected = true;
+					Predator.this.conflict = true;
 				}
 			}
 			// Chek the current position (for fixed actors)
 			else if (m.getContent() instanceof Cell2DView) {
-				Cell2DView v = (Cell2DView) m.getContent();
-				Cell2DState s = (Cell2DState) Predator.this.getState();
+				// Do nothing
 
-				/*
-				 * if ((Predator.this.nextMove.x == v.getX()) &&
-				 * (Predator.this.nextMove.y == v.getY())) {
-				 * Predator.this.conflictDetected = true; }
-				 */
 			}
 
 		}
@@ -212,9 +191,9 @@ public class Predator extends Cell {
 
 	private void solveConflicts() {
 
-		if (this.conflictDetected == true) {
-			this.conflictDetected = false;
-			this.conflictMessages.clear();
+		if (this.conflict == true) {
+			this.conflict = false;
+			this.conflictingMessages.clear();
 
 			Cell2DState s = (Cell2DState) this.getState();
 			this.nextMove.x = s.getX();
@@ -222,12 +201,12 @@ public class Predator extends Cell {
 			return;
 		}
 
-		if (this.conflictMessages.size() < 2) {
-			this.conflictMessages.clear();
+		if (this.conflictingMessages.size() < 2) {
+			this.conflictingMessages.clear();
 			return;
 		}
 
-		Pair<Reference, Point2i> res = this.policy.solveConflict(this.conflictMessages);
+		Pair<Reference, Point2i> res = this.policy.solveConflict(this.conflictingMessages);
 
 		// If this actor loose set nextMove to the current position
 		if (res.getKey() != this.getReference()) {
@@ -236,7 +215,7 @@ public class Predator extends Cell {
 			this.nextMove.y = s.getY();
 		}
 
-		this.conflictMessages.clear();
+		this.conflictingMessages.clear();
 	}
 
 	/**
@@ -251,14 +230,7 @@ public class Predator extends Cell {
 		this.setState(s);
 
 		// Compute the next position
-		Point2i source = new Point2i(s.getX(), s.getY());
-		Point2i dir;
-		if (this.canSeePrey == false) {
-			dir = this.policy.movePredator(this.predators, null, this);
-		} else {
-			dir = this.policy.movePredator(this.predators, this.preyPos, this);
-		}
-		this.direction.set(dir);
+		roaming();
 
 		// Update next move
 		this.nextMove.x = s.getX() + this.direction.x;
@@ -266,7 +238,17 @@ public class Predator extends Cell {
 		ToroidalUtils.normailizePosition(this.nextMove, DIM);
 
 		// Reset
-		this.canSeePrey = false;
+		this.preyVisible = false;
+	}
+
+	private void roaming() {
+		Point2i dir;
+		if (this.preyVisible == false) {
+			dir = this.policy.movePredator(this.predators, null, this);
+		} else {
+			dir = this.policy.movePredator(this.predators, this.preyPos, this);
+		}
+		this.direction.set(dir);
 	}
 
 	// Send a request for the next position
@@ -275,8 +257,7 @@ public class Predator extends Cell {
 	}
 
 	private Move2DView getMoveView() {
-		Cell2DState state = (Cell2DState) this.getState();
-		return new Move2DView(state.getX(), state.getY(), this.nextMove.x, this.nextMove.y, "Predator");
+		return new Move2DView(getPosition(), this.nextMove.x, this.nextMove.y, "Predator");
 	}
 
 	public Point2i getDirection() {

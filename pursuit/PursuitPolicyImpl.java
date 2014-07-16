@@ -19,6 +19,8 @@ import javax.vecmath.Point2i;
 
 public class PursuitPolicyImpl implements PursuitPolicy {
 
+	private static final long serialVersionUID = 1L;
+	
 	private static final int DIM;
 	private static final double PREDATOR_CHANGE_DIR_PROB;
 	private static final double PREY_CHANGE_DIR_PROB;
@@ -43,12 +45,37 @@ public class PursuitPolicyImpl implements PursuitPolicy {
 		DIM = Integer.parseInt(b.getString("field_dim"));
 	}
 
-	PursuitPolicyImpl() {
-	}
-
 	@Override
 	public Point2i movePrey(List<Point2i> goals, List<Point2i> predators, Prey instance) {
-		return null;
+		Random r = new Random();
+		Point2i res = instance.getDirection();
+		
+		// If the prey see at least one predator change probability is increased
+		double change_prob = predators.size() > 0 ? PREY_CHANGE_DIR_PROB : PREY_CHANGE_DIR_PROB - (PREY_CHANGE_DIR_PROB * 0.5);
+
+		double trial = r.nextDouble();
+		if (trial < change_prob) {
+			int c = r.nextInt(3);
+			// Invert direction
+			if (c == 0) {
+				res.x = -instance.getDirection().x;
+				res.y = -instance.getDirection().y;
+			}
+			// Turn around of 90 degrees
+			else if (c == 1) {
+				int tmp = instance.getDirection().x;
+				res.x = instance.getDirection().y;
+				res.y = tmp;
+			}
+			// Invert and turn around
+			else if (c == 2) {
+				int tmp = instance.getDirection().x;
+				res.x = -instance.getDirection().y;
+				res.y = -tmp;
+			}
+		}
+		
+		return res;
 	}
 
 	@Override
