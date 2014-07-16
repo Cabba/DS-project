@@ -4,21 +4,15 @@ import it.unipr.aotlab.actomos.discrete.Cell;
 import it.unipr.aotlab.code.actor.Case;
 import it.unipr.aotlab.code.actor.Message;
 import it.unipr.aotlab.code.actor.cases.Cycler;
-import it.unipr.aotlab.code.error.ConfigurationException;
-import it.unipr.aotlab.code.error.ConfigurationInfo;
-import it.unipr.aotlab.code.error.ErrorManager;
-import it.unipr.aotlab.code.runtime.Controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ResourceBundle;
 
 public final class Goal extends Cell {
 
 	private static final long serialVersionUID = 1L;
 	
-	private static final int RADIUS;
-	
+	/*
 	static {
 		ResourceBundle b;
 
@@ -36,6 +30,7 @@ public final class Goal extends Cell {
 		
 		RADIUS = Integer.parseInt(b.getString("goal.radius"));
 	}
+	*/
 
 	public Goal() {
 	}
@@ -72,7 +67,12 @@ public final class Goal extends Cell {
 		/** {@inheritDoc} **/
 		@Override
 		public void process(final Message m) {
+			sendInformation();
 		}
 	}
 
+	// Send a request for the next position
+	private void sendInformation() {
+		send(GBROADCAST, this.getState().getView() );
+	}
 }

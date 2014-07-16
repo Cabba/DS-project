@@ -1,14 +1,11 @@
 package it.unipr.aotlab.actomos.examples.pursuit;
 
-import it.unipr.aotlab.actomos.discrete.d2d.SimulatorD2D;
 import it.unipr.aotlab.code.configuration.Configuration;
 import it.unipr.aotlab.code.error.ConfigurationException;
 import it.unipr.aotlab.code.error.ConfigurationInfo;
 import it.unipr.aotlab.code.error.ErrorManager;
 import it.unipr.aotlab.code.logging.BinaryWriter;
-import it.unipr.aotlab.code.logging.ConsoleWriter;
 import it.unipr.aotlab.code.logging.Logger;
-import it.unipr.aotlab.code.logging.TextualFormatter;
 import it.unipr.aotlab.code.runtime.Controller;
 
 import java.util.ArrayList;
@@ -51,36 +48,39 @@ public final class Initiator2D {
 		        | Logger.LOGOUTPUTMESSAGE
 		        | Logger.LOGACTORSHUTDOWN);
 		
-		//c.setFilter(Logger.ALLLOGS);
-		
 		c.addHandler(BinaryWriter.class.getName(), null, null, "pursuit", "d2d");
-		c.addHandler(ConsoleWriter.class.getName(), TextualFormatter.class.getName(), null);
+		//c.addHandler(ConsoleWriter.class.getName(), TextualFormatter.class.getName(), null);
 		
-		final long length = 100;
+		final long length = 1000;
 		final int sideX = DIM;
 		final int sideY = DIM;
 		
-		List<Point2i> p= generateDifferentRandomPoints(5, DIM);
+		List<Point2i> p= generateDifferentRandomPoints(6, DIM);
 		
 		final Integer preyPos[] = {p.get(0).x,p.get(0).y};
-		final Integer goalPos[] = {9, 9};
+		final Integer goalPos[] = {p.get(5).x, p.get(5).y};
 		final Integer predatorsPos[] = {p.get(1).x,p.get(1).y,  p.get(2).x,p.get(2).y,  p.get(3).x,p.get(3).y,  p.get(4).x,p.get(4).y};
 
 		final Object[] prey = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Prey", preyPos };
 		final Object[] predator = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Predator", predatorsPos };
 		final Object[] fixed_goal = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Goal", goalPos };
-		final Object[] goal = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Goal", 0.01};
-		final Object[] empty = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Empty", 1.0 };
+		final Object[] goal = new Object[] { "it.unipr.aotlab.actomos.examples.pursuit.Goal", 0.1};
 
 		final int radius = 1;
 
-		c.setScheduler(SimulatorD2D.class.getName());
+		PursuitPolicy policy = new PursuitPolicyImpl();
+		
+		c.setScheduler(PursuitSimulator.class.getName());
 
-		c.setArguments(length, sideX, sideY, new Object[] { prey, predator /*fixed_goal*/}, /*new Object[]{ goal, empty }*/ null, radius);
+		c.setArguments(length, sideX, sideY, policy, new Object[] { prey, predator, fixed_goal}, /*new Object[]{ goal }*/ null, radius);
 
 		Controller.INSTANCE.run();
 	}
 	
+	
+	////////
+	// UTILS
+	////////
 	public static List<Point2i> generateDifferentRandomPoints(int pointsNumber, int limit){
 		List<Point2i> pl = new ArrayList<>();
 		Random r = new Random();
