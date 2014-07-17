@@ -80,7 +80,7 @@ public class PursuitPolicyImpl implements PursuitPolicy {
 
 	@Override
 	public Point2i movePredator(List<Pair<Reference, Point2i>> predators, Point2i prey, Predator instance) {
-		Point2i result = new Point2i();
+		Point2i result = instance.getDirection();
 
 		// If there is no prey
 		if (prey == null) {

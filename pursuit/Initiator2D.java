@@ -51,7 +51,7 @@ public final class Initiator2D {
 		c.addHandler(BinaryWriter.class.getName(), null, null, "pursuit", "d2d");
 		//c.addHandler(ConsoleWriter.class.getName(), TextualFormatter.class.getName(), null);
 		
-		final long length = 1000;
+		final long length = 500;
 		final int sideX = DIM;
 		final int sideY = DIM;
 		
